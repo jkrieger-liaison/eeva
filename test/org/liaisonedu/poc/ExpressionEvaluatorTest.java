@@ -44,7 +44,10 @@ public class ExpressionEvaluatorTest {
 		System.out.println("");
 		System.out.println("TESTING 1 OR (2 AND 3) EXPRESSION");
 		System.out.println("----------------------------------");
-		test.testMultiGroups1No34();
+		test.testMultiGroups1No23();
+		test.testMultiGroups23No1();
+		test.testMultiGroupsNo123();
+		test.testMultiGroups2No13();
 		// (1 AND 2) OR (3 AND 4)
 		// (1 OR 2) AND (2 AND 3)
 		// (1 OR 2) AND (3 AND 4)
@@ -163,16 +166,52 @@ public class ExpressionEvaluatorTest {
 	}
 	
 	// 1 OR (2 AND 3)
-	public void testMultiGroups1No34() {
+	public void testMultiGroups1No23() {
 		List<KeyedValue> answerGroup1 = createKeyedValueList(1);
 		List<KeyedValue> criteriaGroup1 = createKeyedValueList(1,2);
 		List<KeyedValue> answerGroup2 = createKeyedValueList(5, 6);
-		List<KeyedValue> criteriaGroup2 = createKeyedValueList(3, 4);
+		List<KeyedValue> criteriaGroup2 = createKeyedValueList(2, 3);
 		
 		Expression expression1 = new Expression(Operator.OR, 1L, 2L, Operator.OR, answerGroup1, criteriaGroup1);
 		Expression expression2 = new Expression(Operator.AND, 2L, null, null, answerGroup2, criteriaGroup2);
 		
 		assertResolveExpression(buildExpressionMap(expression1, expression2), true);
+	}
+
+	public void testMultiGroups23No1() {
+		List<KeyedValue> answerGroup1 = createKeyedValueList();
+		List<KeyedValue> criteriaGroup1 = createKeyedValueList(1);
+		List<KeyedValue> answerGroup2 = createKeyedValueList(2, 3);
+		List<KeyedValue> criteriaGroup2 = createKeyedValueList(2, 3);
+		
+		Expression expression1 = new Expression(Operator.OR, 1L, 2L, Operator.OR, answerGroup1, criteriaGroup1);
+		Expression expression2 = new Expression(Operator.AND, 2L, null, null, answerGroup2, criteriaGroup2);
+		
+		assertResolveExpression(buildExpressionMap(expression1, expression2), true);
+	}
+
+	public void testMultiGroupsNo123() {
+		List<KeyedValue> answerGroup1 = createKeyedValueList();
+		List<KeyedValue> criteriaGroup1 = createKeyedValueList(1);
+		List<KeyedValue> answerGroup2 = createKeyedValueList();
+		List<KeyedValue> criteriaGroup2 = createKeyedValueList(3, 4);
+		
+		Expression expression1 = new Expression(Operator.OR, 1L, 2L, Operator.OR, answerGroup1, criteriaGroup1);
+		Expression expression2 = new Expression(Operator.AND, 2L, null, null, answerGroup2, criteriaGroup2);
+		
+		assertResolveExpression(buildExpressionMap(expression1, expression2), false);
+	}
+
+	public void testMultiGroups2No13() {
+		List<KeyedValue> answerGroup1 = createKeyedValueList();
+		List<KeyedValue> criteriaGroup1 = createKeyedValueList(1);
+		List<KeyedValue> answerGroup2 = createKeyedValueList(2);
+		List<KeyedValue> criteriaGroup2 = createKeyedValueList(3, 4);
+		
+		Expression expression1 = new Expression(Operator.OR, 1L, 2L, Operator.OR, answerGroup1, criteriaGroup1);
+		Expression expression2 = new Expression(Operator.AND, 2L, null, null, answerGroup2, criteriaGroup2);
+		
+		assertResolveExpression(buildExpressionMap(expression1, expression2), false);
 	}
 	
 	
