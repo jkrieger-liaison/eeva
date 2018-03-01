@@ -16,7 +16,6 @@ public class ExpressionEvaluator {
 		Assert.that(expressionMap != null, "Expression map should not be null");
 		boolean result = false;
 		Long rootGroupId = resolveExpressions(expressionMap);
-		//Using the parent expression, make a decision to short circuit given outcome
 		Expression rootExpression = expressionMap.get(rootGroupId);
 		if(rootExpression.childGroupId != null && expressionMap.containsKey(rootExpression.childGroupId)) {
 			result = evaluateChildren(rootExpression, expressionMap.get(rootExpression.childGroupId), expressionMap);
@@ -92,14 +91,24 @@ public class ExpressionEvaluator {
 		if (!groupIdExpressionResolutionMap.containsKey(workingExpression.groupId)) {
 			groupIdExpressionResolutionMap.put(workingExpression.groupId, resolveExpression(workingExpression));
 		}
+		//If the parent is resolved then resolve it's children.  Sometimes children get resolved before their parents, in which case
 		if (hasUnresolvedChildGroup(groupIdExpressionResolutionMap, workingExpression)) {
 			//iterate this method until there are no more children to operate on.
 			resolveGroup(groupIdExpressionResolutionMap, groupIdExpressionMap, groupIdExpressionMap.get(workingExpression.childGroupId), workingExpression.groupId);
+		} else if (hasResolvedChildWithoutParentId(groupIdExpressionResolutionMap, workingExpression)) {
+			groupIdExpressionResolutionMap.get(workingExpression.childGroupId).parentGroupId = workingExpression.groupId;
 		}
 	}
 	
 	private boolean hasUnresolvedChildGroup(Map<Long, Expression> groupIdExpressionResolutionMap, Expression parentExpression) {
-		return parentExpression.childGroupId != null && !groupIdExpressionResolutionMap.containsKey(parentExpression.childGroupId);
+		return parentExpression.childGroupId != null
+					&& !groupIdExpressionResolutionMap.containsKey(parentExpression.childGroupId);
+	}
+
+	private boolean hasResolvedChildWithoutParentId(Map<Long, Expression> groupIdExpressionResolutionMap, Expression parentExpression) {
+		return parentExpression.childGroupId != null
+					&& groupIdExpressionResolutionMap.containsKey(parentExpression.childGroupId)
+					&& groupIdExpressionResolutionMap.get(parentExpression.childGroupId).parentGroupId == null;
 	}
 	
 	private Expression resolveExpression(Expression expression) {
@@ -167,10 +176,11 @@ class Expression {
 		return "answers" + values.toString()
 				+ " operator [" + operator
 				+ "] with criteria " + criteria.toString()
+				+ " groupId [" + groupId + "]"
 				+ " parentGroupId [" + parentGroupId
-			    + "] childGroupId ["+ childGroupId
+				+ "] childGroupId ["+ childGroupId
 			    + "] childOperator [" + childGroupOperator + "]"
-				+ " isTrue [" + isTrue + "]";
+				+ " evaluates to [" + isTrue + "]";
 	}
 }
 
