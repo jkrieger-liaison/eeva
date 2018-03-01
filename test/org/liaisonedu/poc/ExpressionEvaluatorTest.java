@@ -333,6 +333,7 @@ public class ExpressionEvaluatorTest {
 		return values;
 	}
 	
+	//Build with linkedHashMap so we are guarenteed the order we add expressions to the map.  This is necessary for testing parent logic.
 	private Map<Long, Expression> buildExpressionMap(Expression ... expressions) {
 		Map<Long, Expression> expressionMap = new LinkedHashMap<>();
 		for(Expression expression : expressions) {

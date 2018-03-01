@@ -149,7 +149,8 @@ public class ExpressionEvaluator {
 class Expression {
 	Operator operator;
 	Long groupId;
-	Long parentGroupId; //Transient field, does not need to be in the database
+	//Transient field, does not need to be in the database.  This is used to determine the correct order of operations, a null parentGroupId indicates the root expression.
+	Long parentGroupId;
 	Long childGroupId;
 	Operator childGroupOperator;
 	List<KeyedValue> values;
