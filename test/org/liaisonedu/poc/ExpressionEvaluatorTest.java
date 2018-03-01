@@ -18,37 +18,29 @@ public class ExpressionEvaluatorTest {
 	public static void main(String[] args) {
 		ExpressionEvaluatorTest test = new ExpressionEvaluatorTest();
 		failFlag = false;
-		System.out.println("TESTING BASIC (1 AND 2) EXPRESSION");
-		System.out.println("----------------------------------");
+		
+		printTestTitle("TESTING BASIC (1 AND 2) EXPRESSION");
 		test.testSingleGroupANDGivenAllCriteriaMet();
 		test.testSingleGroupANDGivenSomeCriteriaMet();
 		
-		System.out.println("");
-		System.out.println("TESTING BASIC (1 OR 2) EXPRESSION");
-		System.out.println("----------------------------------");
+		printTestTitle("TESTING BASIC (1 OR 2) EXPRESSION");
 		test.testSingleGroupORGivenAllCriteriaMet();
 		test.testSingleGroupORGivenSomeCriteriaMet();
 		test.testSingleGroupORGivenNoCriteriaMet();
 		// (1 AND 2 AND 3)
 		// (1 OR 2 OR 3)
-		System.out.println("");
-		System.out.println("TESTING (1 AND (2 OR 3)) EXPRESSION");
-		System.out.println("----------------------------------");
+		printTestTitle("TESTING (1 AND (2 OR 3)) EXPRESSION");
 		test.testMultiGroupsANDORGivenAllCriteriaMet();
 		test.testMultiGroupsANDORGivenAllOROnlyMet();
 		test.testMultiGroupsANDORGivenAllANDWithSomeORMet();
 		// (1 AND 2) AND (3 OR 4)
-		System.out.println("");
-		System.out.println("TESTING (1 AND 2) AND (3 OR 4) EXPRESSION");
-		System.out.println("----------------------------------");
+		printTestTitle("TESTING (1 AND 2) AND (3 OR 4) EXPRESSION");
 		test.testComplexGroups123No4();
 		test.testComplexGroups12No34();
 		test.testComplexGroups134No2();
 			// (1 AND 2) OR (2 AND 3)
 		//1 OR (2 AND 3)
-		System.out.println("");
-		System.out.println("TESTING 1 OR (2 AND 3) EXPRESSION");
-		System.out.println("----------------------------------");
+		printTestTitle("TESTING 1 OR (2 AND 3) EXPRESSION");
 		test.testMultiGroups1No23();
 		test.testMultiGroups23No1();
 		test.testMultiGroupsNo123();
@@ -57,17 +49,26 @@ public class ExpressionEvaluatorTest {
 		// (1 OR 2) AND (2 AND 3)
 		// (1 OR 2) AND (3 AND 4)
 		// 1 AND (2 OR (3 AND 4))
-		System.out.println("");
-		System.out.println("TESTING 1 AND ((2 OR 3) AND (4 OR 5)) EXPRESSION");
-		System.out.println("----------------------------------");
+		printTestTitle("TESTING 1 AND ((2 OR 3) AND (4 OR 5)) EXPRESSION");
 		test.testNestedChildren125IsTrue();
 		test.testNestedChildren125WithReverseMapOrderIsTrue();
 		test.testNestedChildren1236Fails();
 		
-		System.out.println("");
-		System.out.println("TESTING 1 OR ((2 OR 3) AND ((4 OR 5) OR (6 AND 7))) EXPRESSION");
-		System.out.println("----------------------------------");
+		printTestTitle("TESTING 1 OR ((2 OR 3) AND ((4 OR 5) OR (6 AND 7))) EXPRESSION");
 		test.testSomeCraziness0267ShouldBeTrue();
+		
+		printTestTitle("TESTING 1 AND !(2 OR 3) EXPRESSION");
+		test.testAND_NOT12();
+		
+		printTestTitle("TESTING 1 AND !(2 AND 3) EXPRESSION");
+		test.testAND_NOT12ShouldBetrue();
+		
+		printTestTitle("TESTING 1 OR !(2 AND 3) EXPRESSION");
+		test.testOR_NOT123ShouldBeTrue();
+		test.testOR_NOT2ShouldBeTrue();
+		test.testOR_NOT23ShouldBeFalse();
+		
+		
 		//Report failures
 		System.out.println("");
 		System.out.print("Overall Testing Status:");
@@ -76,6 +77,12 @@ public class ExpressionEvaluatorTest {
 		} else {
 			System.out.print(" PASS");
 		}
+	}
+	
+	private static void printTestTitle(String title) {
+		System.out.println("");
+		System.out.println(title);
+		System.out.println("----------------------------------");
 	}
 	
 	// (1 AND 2)
@@ -301,6 +308,64 @@ public class ExpressionEvaluatorTest {
 		Expression expression4 = new Expression(AND, 4L, null, null, answerGroup4, criteriaGroup4);
 		
 		assertResolveExpression(buildExpressionMap(expression1, expression2, expression3, expression4), true);
+	}
+	
+	// 1 AND !(2 OR 3)
+	public void testAND_NOT12() {
+		List<KeyedValue> answerGroup1 = createKeyedValueList(1);
+		List<KeyedValue> criteriaGroup1 = createKeyedValueList(1);
+		List<KeyedValue> answerGroup2 = createKeyedValueList(2);
+		List<KeyedValue> criteriaGroup2 = createKeyedValueList(2, 3);
+		
+		Expression expression1 = new Expression(OR, 1L, 2L, AND_NOT, answerGroup1, criteriaGroup1);
+		Expression expression2 = new Expression(OR, 2L, null, null, answerGroup2, criteriaGroup2);
+		assertResolveExpression(buildExpressionMap(expression1, expression2), false);
+	}
+
+	// 1 AND !(2 AND 3)
+	public void testAND_NOT12ShouldBetrue() {
+		List<KeyedValue> answerGroup1 = createKeyedValueList(1);
+		List<KeyedValue> criteriaGroup1 = createKeyedValueList(1);
+		List<KeyedValue> answerGroup2 = createKeyedValueList(2);
+		List<KeyedValue> criteriaGroup2 = createKeyedValueList(2, 3);
+		
+		Expression expression1 = new Expression(OR, 1L, 2L, AND_NOT, answerGroup1, criteriaGroup1);
+		Expression expression2 = new Expression(AND, 2L, null, null, answerGroup2, criteriaGroup2);
+		assertResolveExpression(buildExpressionMap(expression1, expression2), true);
+	}
+
+	// 1 OR !(2 AND 3)
+	public void testOR_NOT123ShouldBeTrue() {
+		List<KeyedValue> answerGroup1 = createKeyedValueList(1);
+		List<KeyedValue> criteriaGroup1 = createKeyedValueList(1);
+		List<KeyedValue> answerGroup2 = createKeyedValueList(2, 3);
+		List<KeyedValue> criteriaGroup2 = createKeyedValueList(2, 3);
+		
+		Expression expression1 = new Expression(OR, 1L, 2L, OR_NOT, answerGroup1, criteriaGroup1);
+		Expression expression2 = new Expression(AND, 2L, null, null, answerGroup2, criteriaGroup2);
+		assertResolveExpression(buildExpressionMap(expression1, expression2), true);
+	}
+	
+	public void testOR_NOT2ShouldBeTrue() {
+		List<KeyedValue> answerGroup1 = createKeyedValueList();
+		List<KeyedValue> criteriaGroup1 = createKeyedValueList(1);
+		List<KeyedValue> answerGroup2 = createKeyedValueList(2);
+		List<KeyedValue> criteriaGroup2 = createKeyedValueList(2, 3);
+		
+		Expression expression1 = new Expression(OR, 1L, 2L, OR_NOT, answerGroup1, criteriaGroup1);
+		Expression expression2 = new Expression(AND, 2L, null, null, answerGroup2, criteriaGroup2);
+		assertResolveExpression(buildExpressionMap(expression1, expression2), true);
+	}
+
+	public void testOR_NOT23ShouldBeFalse() {
+		List<KeyedValue> answerGroup1 = createKeyedValueList();
+		List<KeyedValue> criteriaGroup1 = createKeyedValueList(1);
+		List<KeyedValue> answerGroup2 = createKeyedValueList(2,3);
+		List<KeyedValue> criteriaGroup2 = createKeyedValueList(2, 3);
+		
+		Expression expression1 = new Expression(OR, 1L, 2L, OR_NOT, answerGroup1, criteriaGroup1);
+		Expression expression2 = new Expression(AND, 2L, null, null, answerGroup2, criteriaGroup2);
+		assertResolveExpression(buildExpressionMap(expression1, expression2), false);
 	}
 	
 	private void assertResolveExpression(Map<Long,Expression> expressionMap, boolean expectedResolution) {

@@ -1,7 +1,9 @@
 package org.liaisonedu.poc;
 
 import static org.liaisonedu.poc.Operator.AND;
+import static org.liaisonedu.poc.Operator.AND_NOT;
 import static org.liaisonedu.poc.Operator.OR;
+import static org.liaisonedu.poc.Operator.OR_NOT;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,26 +27,31 @@ public class ExpressionEvaluator {
 		return result;
 	}
 	
-	private boolean evaluateChildren(Expression parentExpression, Expression childExpression, Map<Long, Expression> expressionMap) {
+	private boolean evaluateChildren(Expression workingExpression, Expression childExpression, Map<Long, Expression> expressionMap) {
 		boolean shortCircuit = false;
 		boolean evaluationResult = false;
-		if ((parentExpression.isTrue && OR.equals(parentExpression.childGroupOperator))
-				|| (!parentExpression.isTrue && AND.equals(parentExpression.childGroupOperator))) {
+		if ((workingExpression.isTrue && OR.equals(workingExpression.childGroupOperator))
+				|| (!workingExpression.isTrue && AND.equals(workingExpression.childGroupOperator))) {
 			shortCircuit = true;
-			evaluationResult = parentExpression.isTrue;
+			evaluationResult = workingExpression.isTrue;
 		}
 		if (!shortCircuit) {
 			boolean isChildEvaluationTrue = childExpression.isTrue;
 			if (childExpression.childGroupId != null) {
 				isChildEvaluationTrue = evaluateChildren(childExpression, expressionMap.get(childExpression.childGroupId), expressionMap);
 			}
-			switch (parentExpression.childGroupOperator) {
+			switch (workingExpression.childGroupOperator) {
 				case OR:
-					evaluationResult = parentExpression.isTrue || isChildEvaluationTrue;
+					evaluationResult = workingExpression.isTrue || isChildEvaluationTrue;
 					break;
 				case AND:
-					evaluationResult = parentExpression.isTrue && isChildEvaluationTrue;
+					evaluationResult = workingExpression.isTrue && isChildEvaluationTrue;
 					break;
+				case AND_NOT:
+					evaluationResult = workingExpression.isTrue && !isChildEvaluationTrue;
+					break;
+				case OR_NOT:
+					evaluationResult = workingExpression.isTrue || !isChildEvaluationTrue;
 			}
 		}
 		return evaluationResult;
@@ -117,12 +124,19 @@ public class ExpressionEvaluator {
 			isExpressionTrue = evaluateCriteriaToValues(criteria, expression.values);
 			//If one of the expressions does not match using the AND operator, we can safely short circuit the loop.
 			//If one of the expressions is true and we're using the OR operator, we can safely short circuit this loop.
-			if ((AND.equals(expression.operator) && !isExpressionTrue) || (OR.equals(expression.operator) && isExpressionTrue)) {
+			if (canShortCircuit(isExpressionTrue, expression.operator)) {
 				break;
 			}
 		}
-		expression.isTrue = isExpressionTrue;
+		expression.isTrue = isExpressionTrue && !(AND_NOT.equals(expression.operator) || OR_NOT.equals(expression.operator));
 		return expression;
+	}
+	
+	private boolean canShortCircuit(boolean isExpressionTrue, Operator operator) {
+		return (AND.equals(operator) && !isExpressionTrue)
+				|| (OR.equals(operator) && isExpressionTrue)
+				|| (AND_NOT.equals(operator) && isExpressionTrue)
+				|| (OR_NOT.equals(operator) && !isExpressionTrue);
 	}
 	
 	private boolean evaluateCriteriaToValues(KeyedValue criteria, List<KeyedValue> testValueList) {
@@ -186,7 +200,7 @@ class Expression {
 }
 
 enum Operator {
-	AND, OR
+	AND, OR, AND_NOT, OR_NOT
 }
 
 class KeyedValue {
